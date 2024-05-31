@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'temperature_page.dart';
@@ -8,7 +10,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-
+    url: 'https://brftnmmnvwotcpsmcyas.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyZnRubW1udndvdGNwc21jeWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTQyNzExNzAsImV4cCI6MjAyOTg0NzE3MH0.R5nJolNpIzO5APLymBFGDz1dPmbiXSTHQB3cw3I37Vk',
   );
   final latestTemp = await Supabase.instance.client
       .from('lala')
@@ -20,9 +24,16 @@ Future<void> main() async {
       .select('lighter')
       .order('id', ascending: false)
       .limit(1);
+
+  final latestMotion = await Supabase.instance.client
+      .from('tablemotion')
+      .select('motion')
+      .order('id', ascending: false)
+      .limit(1);
   runApp(Home(
     latestTemp: latestTemp,
     latestLight: latestLight,
+    latestMotion: latestMotion,
   ));
 }
 
@@ -31,22 +42,28 @@ class Home extends StatefulWidget {
   final latestTemp;
   // ignore: prefer_typing_uninitialized_variables
   final latestLight;
-
-  const Home({Key? key, this.latestTemp, this.latestLight});
+  //ignore: prefer_typing_uninitialized_variables
+  final latestMotion;
+  const Home({Key? key, this.latestTemp, this.latestLight, this.latestMotion});
 
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
+  // ignore: prefer_typing_uninitialized_variables
   var latestTemp;
+  // ignore: prefer_typing_uninitialized_variables
   var latestLight;
+  //ignore: prefer_typing_uninitialized_variables
+  var latestMotion;
 
   @override
   void initState() {
     super.initState();
     latestTemp = widget.latestTemp;
     latestLight = widget.latestLight;
+    latestMotion = widget.latestMotion;
   }
 
   Future<void> _refreshData() async {
@@ -61,9 +78,16 @@ class _HomeState extends State<Home> {
         .order('id', ascending: false)
         .limit(1);
 
+    final newLatestMotion = await Supabase.instance.client
+        .from('tablemotion')
+        .select('motion')
+        .order('id', ascending: false)
+        .limit(1);
+
     setState(() {
       latestTemp = newLatestTemp;
       latestLight = newLatestLight;
+      latestMotion = newLatestMotion;
     });
   }
 
@@ -130,6 +154,7 @@ class _HomeState extends State<Home> {
           child: MyCard(
             latestTemp: latestTemp,
             latestLight: latestLight,
+            latestMotion: latestMotion,
           ),
         ),
         backgroundColor: const Color(0xFF101820),
@@ -151,8 +176,11 @@ class MyCard extends StatelessWidget {
   final latestTemp;
   // ignore: prefer_typing_uninitialized_variables
   final latestLight;
+  // ignore: prefer_typing_uninitialized_variables
+  final latestMotion;
 
-  const MyCard({Key? key, this.latestTemp, this.latestLight});
+  const MyCard(
+      {Key? key, this.latestTemp, this.latestLight, this.latestMotion});
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +188,8 @@ class MyCard extends StatelessWidget {
         latestTemp.isNotEmpty ? latestTemp[0]['temperature'].toString() : '';
     final light =
         latestLight.isNotEmpty ? latestLight[0]['lighter'].toString() : '';
+    final motion =
+        latestMotion.isNotEmpty ? latestMotion[0]['motion'].toString() : '';
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -208,14 +238,14 @@ class MyCard extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const MotionPage()),
             );
           },
-          child: const Card(
+          child: Card(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 ListTile(
-                  leading: Icon(Icons.accessibility,
+                  leading: const Icon(Icons.accessibility,
                       size: 24.0, color: Color(0xFF101820)),
-                  title: Text(
+                  title: const Text(
                     'Motion',
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
@@ -225,8 +255,8 @@ class MyCard extends StatelessWidget {
                     ),
                   ),
                   subtitle: Text(
-                    'Detected',
-                    style: TextStyle(
+                    motion,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w300,
                       color: Colors.black,
                       letterSpacing: 1.2,
@@ -246,7 +276,6 @@ class MyCard extends StatelessWidget {
             );
           },
           child: Card(
-            // Added GestureDetector here
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -263,7 +292,7 @@ class MyCard extends StatelessWidget {
                     ),
                   ),
                   subtitle: Text(
-                    '$light(lm)', // Displaying light data here
+                    '$light(lm)',
                     style: const TextStyle(
                       fontWeight: FontWeight.w300,
                       color: Colors.black,
